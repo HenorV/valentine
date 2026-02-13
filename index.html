@@ -107,3 +107,154 @@
     }
 
     .footer{
+      margin-top: 12px;
+      font-size: 12px;
+      opacity:.7;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card" id="step1">
+  <div class="badge">Berlin → Prishtina Lab 🧪</div>
+  <h2>Extremely Serious Valentine Research</h2>
+  <p class="muted">Please answer honestly. The algorithm is sensitive.</p>
+  <p><strong>Q1:</strong> What’s harder?</p>
+  <div class="row">
+    <button onclick="pick('Correct ✅', 2)">Long distance</button>
+    <button onclick="pick('Also correct ✅', 2)">Pretending this isn’t cute</button>
+  </div>
+  <div class="footer">Powered by: bad jokes & good intentions</div>
+</div>
+
+<div class="card hidden" id="step2">
+  <h3>Q2: Best way to survive Valentine’s Day?</h3>
+  <p class="muted">Select one. (All choices are suspiciously correct.)</p>
+  <div class="row">
+    <button onclick="pick('Excellent choice 🧠', 3)">Chocolate</button>
+    <button onclick="pick('That’s the vibe 😄', 3)">Laughing at something dumb</button>
+    <button onclick="pick('Wow, so you’re smart-smart 😌', 3)">This exact page</button>
+  </div>
+</div>
+
+<div class="card hidden" id="step3">
+  <h3>Distance Calculator 📏</h3>
+  <p>Berlin ➝ Prishtina</p>
+  <p><strong>Physical distance:</strong> ~1,300 km (rude)</p>
+  <p><strong>Travel time:</strong> too many hours (also rude)</p>
+
+  <p style="margin-top:14px;"><strong>Measuring emotional distance…</strong></p>
+  <div class="bar"><div class="fill" id="fill"></div></div>
+  <p id="emoText" class="muted">Processing…</p>
+
+  <p style="margin-top:18px;"><strong>Bonus question:</strong> Will you be my Valentine?</p>
+  <p class="muted">No pressure. This is a “smile request.”</p>
+
+  <button onclick="yesVal()">Yes 😄</button>
+
+  <div class="runArea" id="runArea" aria-label="runaway button area">
+    <span class="muted">Try pressing “No” if you dare 👇</span>
+    <button class="ghost" id="noBtn">No 🙃</button>
+  </div>
+
+  <p id="result" style="margin-top:16px;"></p>
+</div>
+
+<script>
+  // --- navigation + tiny toast (via alert-ish text) ---
+  function showStep(n){
+    document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
+    document.getElementById('step' + n).classList.remove('hidden');
+  }
+
+  function pick(msg, nextStep){
+    popHearts(6);
+    // small “toast” effect via title swap
+    document.title = msg;
+    setTimeout(() => (document.title = "Extremely Serious Valentine Research"), 900);
+    showStep(nextStep);
+    if(nextStep === 3) startEmoMeter();
+  }
+
+  // --- emotional distance meter ---
+  function startEmoMeter(){
+    const fill = document.getElementById('fill');
+    const emoText = document.getElementById('emoText');
+    fill.style.width = '0%';
+    emoText.textContent = 'Processing…';
+
+    const steps = [
+      {w: 22, t: 'Calibrating vibes…'},
+      {w: 55, t: 'Accounting for missing you a little…'},
+      {w: 82, t: 'Removing “distance” from the equation…'},
+      {w: 100, t: 'Result: ❌ Not even close.'}
+    ];
+
+    let i = 0;
+    const timer = setInterval(() => {
+      fill.style.width = steps[i].w + '%';
+      emoText.textContent = steps[i].t;
+      i++;
+      if(i >= steps.length) clearInterval(timer);
+    }, 900);
+  }
+
+  // --- runaway NO button ---
+  const noBtn = () => document.getElementById('noBtn');
+  const area = () => document.getElementById('runArea');
+
+  function moveNo(){
+    const a = area().getBoundingClientRect();
+    const b = noBtn().getBoundingClientRect();
+    const pad = 10;
+
+    const maxX = a.width - b.width - pad;
+    const maxY = a.height - b.height - pad;
+
+    const x = Math.max(pad, Math.floor(Math.random() * maxX));
+    const y = Math.max(pad, Math.floor(Math.random() * maxY));
+
+    noBtn().style.left = x + 'px';
+    noBtn().style.top = y + 'px';
+    noBtn().style.transform = 'none';
+  }
+
+  // make it dodge hover/touch
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = noBtn();
+    btn.addEventListener('mouseenter', () => { moveNo(); popHearts(2); });
+    btn.addEventListener('touchstart', (e) => { e.preventDefault(); moveNo(); popHearts(2); }, {passive:false});
+    // initial random position
+    setTimeout(moveNo, 250);
+  });
+
+  // --- YES handler ---
+  function yesVal(){
+    popHearts(18);
+    const lines = [
+      "Okay wow. That’s adorable 😄",
+      "Official verdict: you just made my day.",
+      "Long distance: 1 — Us: 100."
+    ];
+    document.getElementById('result').innerHTML = "<strong>" + lines[Math.floor(Math.random()*lines.length)] + "</strong><br><span class='muted'>Happy Valentine’s Day 💛</span>";
+  }
+
+  // --- floating hearts ---
+  function popHearts(n){
+    const emojis = ["💛","💗","💘","💓","✨"];
+    for(let i=0;i<n;i++){
+      const h = document.createElement('div');
+      h.className = 'heart';
+      h.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+      h.style.left = Math.floor(Math.random()*100) + "vw";
+      h.style.setProperty('--drift', (Math.floor(Math.random()*80)-40) + "px");
+      h.style.fontSize = (14 + Math.random()*18) + "px";
+      h.style.animationDuration = (2.6 + Math.random()*2.4) + "s";
+      document.body.appendChild(h);
+      setTimeout(() => h.remove(), 4200);
+    }
+  }
+</script>
+
+</body>
+</html>
