@@ -45,6 +45,23 @@
     }
     .hidden{ display:none; }
 
+    /* Back button */
+    .backBtn{
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 1000;
+      padding: 8px 12px;
+      font-size: 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.92);
+      color:#333;
+      border:1px solid rgba(0,0,0,.12);
+      cursor:pointer;
+      backdrop-filter: blur(6px);
+    }
+    .backBtn.hidden{ display:none; }
+
     /* floating hearts */
     .heart{
       position: fixed;
@@ -135,9 +152,7 @@
       background: var(--pink);
       box-shadow: 0 0 0 6px rgba(255,92,138,.12);
     }
-    .city .label{
-      font-weight: 600;
-    }
+    .city .label{ font-weight: 600; }
     .path{
       position: relative;
       height: 60px;
@@ -174,9 +189,7 @@
       filter: drop-shadow(0 8px 14px rgba(0,0,0,.14));
       transition: left 1.9s ease;
     }
-    .packet.arrived{
-      animation: pulse 0.6s ease-in-out 2;
-    }
+    .packet.arrived{ animation: pulse 0.6s ease-in-out 2; }
     @keyframes pulse{
       0%{ transform: translate(-10%,-50%) scale(1); }
       50%{ transform: translate(-10%,-50%) scale(1.18); }
@@ -185,6 +198,8 @@
   </style>
 </head>
 <body>
+
+<button id="backBtn" class="backBtn hidden" onclick="goBack()">← Back</button>
 
 <!-- STEP 1 -->
 <div class="card" id="step1">
@@ -203,7 +218,7 @@
 
 <!-- STEP 1A -->
 <div class="card hidden" id="step1a">
-  <h3>Awwww :( I miss you too</h3  >
+  <h3>Awwww :( I miss you too</h3>
   <p class="muted">(click to continue)</p>
   <button onclick="goStep2()">Vazhdo ➝</button>
 </div>
@@ -295,7 +310,7 @@
   </div>
 </div>
 
-<!-- STEP 5A (Q5 YES -> textbox + send to your email via Formspree) -->
+<!-- STEP 5A (Q5 YES) -->
 <div class="card hidden" id="step5a">
   <h3>Send a note ✍️</h3>
   <p class="muted">It goes straight to my email. No names needed.</p>
@@ -344,6 +359,10 @@
     <p style="margin-top:14px;"><strong>Hug delivered ✅</strong></p>
     <p class="muted">If you felt a tiny warm moment… that was me 😌</p>
 
+    <div class="row">
+      <button class="ghost" id="resetBtn" onclick="resetQuiz()">↻ Reset quiz</button>
+    </div>
+
     <p style="margin-top:18px;"><strong>Bonus question:</strong> Will you be my Valentine?</p>
     <p class="muted">No pressure. This is a “smile request.”</p>
 
@@ -359,18 +378,93 @@
 </div>
 
 <script>
-  // --- navigation ---
-  function showStep(n){
+  // More hearts everywhere (increase this if you want even more)
+  const HEART_MULTIPLIER = 2.2;  // 1 = normal, 2.2 = more
+  const HEART_CAP = 80;          // safety cap for performance
+
+  // --- history + navigation ---
+  let stepHistory = [];
+
+  function showStep(n, isBack = false){
+    const targetId = 'step' + n;
+
+    if(!isBack){
+      const current = document.querySelector('.card:not(.hidden)');
+      if(current){
+        stepHistory.push(current.id.replace('step',''));
+      }
+    }
+
     document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
-    document.getElementById('step' + n).classList.remove('hidden');
+    const target = document.getElementById(targetId);
+    if(target) target.classList.remove('hidden');
+
+    // Back button logic
+    const backBtn = document.getElementById('backBtn');
+    if(stepHistory.length > 0){
+      backBtn.classList.remove('hidden');
+    } else {
+      backBtn.classList.add('hidden');
+    }
+  }
+
+  function goBack(){
+    if(stepHistory.length === 0) return;
+    const prev = stepHistory.pop();
+    showStep(prev, true);
+  }
+
+  function hideBack(){
+    document.getElementById('backBtn').classList.add('hidden');
+  }
+
+  function resetQuiz(){
+    // clear history + reset UI bits
+    stepHistory = [];
+    hideBack();
+
+    // reset text areas/messages/buttons
+    const q1bMsg = document.getElementById('q1bMsg');
+    const q1bNext = document.getElementById('q1bNext');
+    if(q1bMsg) q1bMsg.textContent = '';
+    if(q1bNext) q1bNext.classList.add('hidden');
+
+    const q2Msg = document.getElementById('q2Msg');
+    if(q2Msg) q2Msg.textContent = '';
+
+    const q4Msg = document.getElementById('q4Msg');
+    if(q4Msg) q4Msg.textContent = '';
+
+    const sentMsg = document.getElementById('sentMsg');
+    if(sentMsg) sentMsg.textContent = '';
+
+    const result = document.getElementById('result');
+    if(result) result.textContent = '';
+
+    // reset hug UI
+    const status = document.getElementById('hugStatus');
+    const after = document.getElementById('hugAfter');
+    const packet = document.getElementById('hugPacket');
+    const path = document.querySelector('.path');
+    if(status) status.textContent = "Calibrating arms…";
+    if(after) after.classList.add('hidden');
+    if(packet){
+      packet.classList.remove('arrived');
+      packet.style.left = '0%';
+    }
+    if(path) path.classList.remove('filled');
+
+    document.title = "Extremely Serious Valentine Research";
+    popHearts(18);
+    showStep(1, true);
   }
 
   // Q1 branching
-  function q1Option1(){ popHearts(6); showStep('1a'); }
-  function q1Option2(){ popHearts(6); showStep('1b'); }
+  function q1Option1(){ popHearts(8); showStep('1a'); }
+  function q1Option2(){ popHearts(8); showStep('1b'); }
 
   function q1bYes(){
-    popHearts(14);
+    popHearts(16);
     document.getElementById('q1bMsg').innerHTML = "<strong>I knew it &lt;3</strong>";
     document.getElementById('q1bNext').classList.remove('hidden');
   }
@@ -379,19 +473,19 @@
 
   // Q2
   function q2Option(message){
-    popHearts(10);
+    popHearts(14);
     document.getElementById('q2Msg').innerHTML = "<strong>" + message + "</strong>";
     showStep('2a');
   }
   function goStep3(){ showStep(3); }
 
   // Q3
-  function q3Option(){ popHearts(8); showStep('3a'); }
+  function q3Option(){ popHearts(12); showStep('3a'); }
   function goStep4(){ showStep(4); }
 
   // Q4
   function q4Option(message){
-    popHearts(8);
+    popHearts(12);
     document.getElementById('q4Msg').innerHTML = "<strong>" + message + "</strong>";
     showStep('4a');
   }
@@ -399,7 +493,7 @@
 
   // Q5
   function q5No(){
-    popHearts(1);
+    popHearts(4);
     showStep('6');
     startHug();
     document.title = "😔";
@@ -431,7 +525,7 @@
           });
 
           if(res.ok){
-            popHearts(16);
+            popHearts(28);
             sentMsg.textContent = "Sent ✅";
             form.reset();
             setTimeout(() => { goHug(); }, 900);
@@ -460,25 +554,35 @@
     packet.style.left = '0%';
     path.classList.remove('filled');
 
+    // allow back until delivered
+    const backBtn = document.getElementById('backBtn');
+    if(stepHistory.length > 0) backBtn.classList.remove('hidden');
+
     status.textContent = "Calibrating arms…";
-    popHearts(4);
+    popHearts(10);
 
     setTimeout(() => {
       status.textContent = "Launching hug…";
       path.classList.add('filled');
+      packet.textContent = "🫂";
       packet.style.left = '100%';
-      popHearts(6);
+      popHearts(16);
     }, 650);
 
     setTimeout(() => {
       packet.classList.add('arrived');
+      packet.textContent = "💛";
       status.textContent = "Arrived in Mitrovica 💛";
-      popHearts(10);
+      popHearts(22);
     }, 650 + 1900);
 
     setTimeout(() => {
       after.classList.remove('hidden');
       status.textContent = "Okay… now I’m smiling.";
+
+      // after hug delivered: remove Back + show reset option
+      hideBack();
+      popHearts(24);
     }, 650 + 1900 + 700);
   }
 
@@ -508,23 +612,23 @@
     // step6 No button
     const btn1 = document.getElementById('noBtn');
     if(btn1){
-      btn1.addEventListener('mouseenter', () => { moveNo('noBtn','runArea'); popHearts(2); });
-      btn1.addEventListener('touchstart', (e) => { e.preventDefault(); moveNo('noBtn','runArea'); popHearts(2); }, {passive:false});
+      btn1.addEventListener('mouseenter', () => { moveNo('noBtn','runArea'); popHearts(8); });
+      btn1.addEventListener('touchstart', (e) => { e.preventDefault(); moveNo('noBtn','runArea'); popHearts(8); }, {passive:false});
       setTimeout(() => moveNo('noBtn','runArea'), 250);
     }
 
     // step1b No button
     const btn2 = document.getElementById('noBtn2');
     if(btn2){
-      btn2.addEventListener('mouseenter', () => { moveNo('noBtn2','runArea2'); popHearts(2); });
-      btn2.addEventListener('touchstart', (e) => { e.preventDefault(); moveNo('noBtn2','runArea2'); popHearts(2); }, {passive:false});
+      btn2.addEventListener('mouseenter', () => { moveNo('noBtn2','runArea2'); popHearts(8); });
+      btn2.addEventListener('touchstart', (e) => { e.preventDefault(); moveNo('noBtn2','runArea2'); popHearts(8); }, {passive:false});
       setTimeout(() => moveNo('noBtn2','runArea2'), 250);
     }
   });
 
   // --- YES handler (final) ---
   function yesVal(){
-    popHearts(18);
+    popHearts(36);
     const lines = [
       "Okay wow. That’s adorable 😄",
       "Official verdict: you just made my day.",
@@ -536,8 +640,10 @@
 
   // --- floating hearts ---
   function popHearts(n){
-    const emojis = ["💛","💗","💘","💓","✨"];
-    for(let i=0;i<n;i++){
+    const emojis = ["💛","💗","💘","💓","✨","🦌","🦞"];
+    const count = Math.min(HEART_CAP, Math.floor(n * HEART_MULTIPLIER));
+
+    for(let i=0;i<count;i++){
       const h = document.createElement('div');
       h.className = 'heart';
       h.textContent = emojis[Math.floor(Math.random()*emojis.length)];
