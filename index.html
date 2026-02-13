@@ -302,7 +302,6 @@
 <!-- STEP 5 (Q5) -->
 <div class="card hidden" id="step5">
   <h3>Q5</h3>
-  <!-- FIX: whole sentence bold -->
   <p><strong>Keq qe skom me ti pa pergjigjet, but I will feel them.</strong></p>
   <p>Do you want to send the poor guy a note? <span class="muted">(I will actually receive it!)</span></p>
 
@@ -379,6 +378,44 @@
   const HEART_MULTIPLIER = 2.2;  // 1 = normal, 2.2 = more
   const HEART_CAP = 80;          // safety cap for performance
 
+  // --- tap anywhere = emoji burst (safe + capped) ---
+  const TAP_BURST = 14;            // base per tap (before multiplier/cap)
+  const TAP_COOLDOWN_MS = 220;     // prevent spam from tiny movements
+  const ON_SCREEN_EMOJI_CAP = 120; // max emoji elements allowed at once
+
+  let lastTapTime = 0;
+
+  function safePop(n){
+    const current = document.querySelectorAll('.heart').length;
+    if(current >= ON_SCREEN_EMOJI_CAP) return;
+
+    const allowed = Math.max(0, ON_SCREEN_EMOJI_CAP - current);
+    popHearts(Math.min(n, allowed));
+  }
+
+  function shouldIgnoreTap(e){
+    const t = e.target;
+    if(!t) return false;
+    const tag = (t.tagName || '').toLowerCase();
+    if(tag === 'textarea' || tag === 'input' || tag === 'button' || tag === 'a' || tag === 'label') return true;
+    if(t.closest && t.closest('form')) return true;
+    return false;
+  }
+
+  function handleTapBurst(e){
+    if(shouldIgnoreTap(e)) return;
+
+    const now = Date.now();
+    if(now - lastTapTime < TAP_COOLDOWN_MS) return;
+    lastTapTime = now;
+
+    safePop(TAP_BURST);
+  }
+
+  document.addEventListener('pointerdown', handleTapBurst, { passive: true });
+  document.addEventListener('touchstart', handleTapBurst, { passive: true });
+  document.addEventListener('mousedown', handleTapBurst);
+
   // --- history + navigation ---
   let stepHistory = [];
   let navMode = "back"; // "back" or "reset"
@@ -388,7 +425,6 @@
     navMode = "back";
     btn.textContent = "← Back";
     btn.onclick = goBack;
-    // visibility controlled by showStep/goBack
   }
 
   function setNavReset(){
@@ -417,12 +453,8 @@
     const target = document.getElementById(targetId);
     if(target) target.classList.remove('hidden');
 
-    // nav button logic:
-    // - if we're in reset mode, keep it reset
-    // - else show back only when history exists
     const navBtn = document.getElementById('navBtn');
     if(navMode === "reset"){
-      // keep reset visible
       navBtn.classList.remove('hidden');
     } else {
       if(stepHistory.length > 0){
@@ -441,12 +473,10 @@
   }
 
   function resetQuiz(){
-    // clear history + reset UI bits
     stepHistory = [];
     navMode = "back";
     hideNav();
 
-    // reset messages/buttons
     const q1bMsg = document.getElementById('q1bMsg');
     const q1bNext = document.getElementById('q1bNext');
     if(q1bMsg) q1bMsg.textContent = '';
@@ -464,7 +494,6 @@
     const result = document.getElementById('result');
     if(result) result.textContent = '';
 
-    // reset hug UI
     const status = document.getElementById('hugStatus');
     const after = document.getElementById('hugAfter');
     const packet = document.getElementById('hugPacket');
@@ -478,7 +507,6 @@
     }
     if(path) path.classList.remove('filled');
 
-    document.title = "Extremely Serious Valentine Research";
     popHearts(18);
     showStep(1, true);
   }
@@ -521,7 +549,7 @@
     showStep('6');
     startHug();
     document.title = "😔";
-    setTimeout(() => (document.title = "Extremely Serious Valentine Research"), 600);
+    setTimeout(() => (document.title = "Best Valentine Quiz"), 600);
   }
 
   function goHug(){
@@ -572,14 +600,12 @@
 
     if(!status || !after || !packet || !path) return;
 
-    // reset
     after.classList.add('hidden');
     packet.classList.remove('arrived');
     packet.style.left = '0%';
     packet.textContent = "💛";
     path.classList.remove('filled');
 
-    // allow back until delivered (only if history exists)
     const navBtn = document.getElementById('navBtn');
     if(stepHistory.length > 0 && navMode !== "reset"){
       setNavBack();
@@ -607,8 +633,6 @@
     setTimeout(() => {
       after.classList.remove('hidden');
       status.textContent = "Okay… now I’m smiling.";
-
-      // after hug delivered: switch nav to RESET (top-left)
       setNavReset();
       popHearts(24);
     }, 650 + 1900 + 700);
@@ -637,7 +661,6 @@
 
   // hookup dodge behavior
   document.addEventListener('DOMContentLoaded', () => {
-    // step6 No button
     const btn1 = document.getElementById('noBtn');
     if(btn1){
       btn1.addEventListener('mouseenter', () => { moveNo('noBtn','runArea'); popHearts(8); });
@@ -645,7 +668,6 @@
       setTimeout(() => moveNo('noBtn','runArea'), 250);
     }
 
-    // step1b No button
     const btn2 = document.getElementById('noBtn2');
     if(btn2){
       btn2.addEventListener('mouseenter', () => { moveNo('noBtn2','runArea2'); popHearts(8); });
